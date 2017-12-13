@@ -1,0 +1,20 @@
+---
+- name: Install NTPDate
+  yum: 
+    name: ntpdate
+    state: present
+
+- name: Install NTP
+  yum: 
+    name: ntp
+    state: present
+
+- name: stop ntp
+  systemd: name=ntpd state=stopped  
+
+- name: Sync
+  shell: ntpdate pool.ntp.org  
+
+- name: Make sure a service is running
+  systemd: state=started name=ntpd
+

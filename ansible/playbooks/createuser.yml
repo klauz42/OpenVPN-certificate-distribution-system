@@ -1,7 +1,0 @@
----
-- hosts: servers
-  user: root
-
-  tasks:
-  
-  - user: name=vpnserver password=vpnqwerty

@@ -1,0 +1,4 @@
+---
+- name: Main role to configure openvpn server
+  import_tasks: redhat.yml
+  when: ansible_os_family|lower == "redhat"

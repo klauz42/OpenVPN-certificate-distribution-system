@@ -1,0 +1,21 @@
+---
+- name: Upgrade all packages
+  yum: name=* state=latest
+
+- name: Install EPEL
+  yum: 
+    name: epel-release
+    state: present
+
+- name: Install openvpn
+  yum:
+   name: "{{ item }}"
+   state: present
+  with_items:
+    - openvpn
+    - openssl
+
+- name: Install Easy-RSA
+  yum: 
+    name: easy-rsa 
+    state: present
