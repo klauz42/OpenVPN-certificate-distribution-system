@@ -1,0 +1,62 @@
+---
+- name: Create directory for configs
+  file:
+    path: /etc/openvpn
+    mode: 0755
+    owner: root
+    group: root
+    state: directory
+
+- name: Copy Easy-RSA to OpenVPN directory
+  shell: cp -rf /usr/share/easy-rsa/2.0/* "{{ openvpn_base_dir }}"
+
+- name: Copy openssl config file to the server
+  copy:
+    src: files/openssl.cnf
+    dest: "{{ openvpn_base_dir }}/openssl.cnf"
+    owner: root
+    group: root
+    mode: 0644  
+
+- name: Copy config file to the server
+  copy:
+    src: files/server.conf
+    dest: "{{ openvpn_base_dir }}/server.conf"
+    owner: root
+    group: root
+    mode: 0644
+
+- name: create ccd
+  file:
+    path: "{{ openvpn_base_dir }}/ccd"
+    mode: 0755
+    owner: root
+    group: root
+    state: directory
+
+- name: Create log dir
+  file:
+    path: "{{ openvpn_log_dir }}"
+    mode: 0755
+    owner: root
+    group: root
+    state: directory
+
+- name: generate dh params
+  command: openssl dhparam -out {{openvpn_base_dir}}/dh2048.pem {{openvpn_rsa_bits}}
+  args:
+    chdir: "{{openvpn_base_dir}}"
+    creates: dh.pem
+
+- name: generate tls-auth key
+  command: openvpn --genkey --secret ta.key
+  args:
+    chdir: "{{openvpn_base_dir}}"
+    creates: ta.key  
+
+- name: setup openvpn auto-start & start
+  service:
+    name: openvpn@server
+    enabled: yes
+    state: started
+

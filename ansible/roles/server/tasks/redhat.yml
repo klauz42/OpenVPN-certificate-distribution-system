@@ -1,5 +1,0 @@
----
-#- include_tasks: install.yml
-#- include_tasks: serverconfig.yml
-#- include_tasks: createca.yml
-- include_tasks: timesync.yml

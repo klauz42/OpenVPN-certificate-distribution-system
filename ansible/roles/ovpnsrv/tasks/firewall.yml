@@ -1,0 +1,21 @@
+- name: Check for firewalld
+  command: which firewall-cmd
+  register: firewalld
+  check_mode: no
+  changed_when: false  # Never report as changed
+  ignore_errors: yes
+
+- name: Check for iptables
+  command: which iptables
+  register: iptables
+  check_mode: no
+  changed_when: false  # Never report as changed
+  ignore_errors: yes
+
+- name: Add port rules (iptables)
+  include: iptables.yml
+  when: firewalld.rc != 0 and iptables.rc == 0
+
+- name: Add port rules (firewalld)
+  include: firewalld.yml
+  when: firewalld.rc == 0

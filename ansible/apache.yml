@@ -1,0 +1,10 @@
+---
+- hosts: apache
+  become: yes
+  become_user: root
+  become_method: sudo
+
+
+  roles:
+   # - apache
+    - ca

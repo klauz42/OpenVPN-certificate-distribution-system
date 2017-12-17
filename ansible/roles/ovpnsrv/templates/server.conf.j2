@@ -75,21 +75,24 @@ dev tun
 # Any X509 key management system can be used.
 # OpenVPN can also use a PKCS #12 formatted key file
 # (see "pkcs12" directive in man page).
-ca ca.crt
-cert server.crt
-key server.key  # This file should be kept secret
+ca "{{ openvpn_base_dir }}/ca.crt"
+cert "{{ openvpn_base_dir }}/server.crt"
+key "{{ openvpn_base_dir }}/server.key"  # This file should be kept secret
 
 # Diffie hellman parameters.
 # Generate your own with:
 #   openssl dhparam -out dh2048.pem 2048
-dh dh2048.pem
+dh "{{ openvpn_base_dir }}/dh2048.pem"
 
 # Network topology
 # Should be subnet (addressing via IP)
 # unless Windows clients v2.0.9 and lower have to
 # be supported (then net30, i.e. a /30 per client)
 # Defaults to net30 (not recommended)
-;topology subnet
+topology subnet
+
+#Path to the crl
+crl-verify "{{ openvpn_base_dir }}/crl.pem"
 
 # Configure server mode and supply a VPN subnet
 # for OpenVPN to draw client addresses from.
@@ -98,7 +101,7 @@ dh dh2048.pem
 # Each client will be able to reach the server
 # on 10.8.0.1. Comment this line out if you are
 # ethernet bridging. See the man page for more info.
-server 10.8.0.0 255.255.255.0
+server "{{ openvpn_server_network }}" "{{ openvpn_server_netmask }}"
 
 # Maintain a record of client <-> virtual IP address
 # associations in this file.  If OpenVPN goes down or
@@ -164,8 +167,8 @@ ifconfig-pool-persist ipp.txt
 # EXAMPLE: Suppose you want to give
 # Thelonious a fixed VPN IP address of 10.9.0.1.
 # First uncomment out these lines:
-;client-config-dir ccd
-;route 10.9.0.0 255.255.255.252
+client-config-dir "{{ openvpn_base_dir }}ccd"
+route "{{ openvpn_server_network }}" "{{ openvpn_server_netmask }}"
 # Then add this line to ccd/Thelonious:
 #   ifconfig-push 10.9.0.1 10.9.0.2
 
@@ -189,7 +192,7 @@ ifconfig-pool-persist ipp.txt
 # (The OpenVPN server machine may need to NAT
 # or bridge the TUN/TAP interface to the internet
 # in order for this to work properly).
-push "redirect-gateway def1 bypass-dhcp"
+;push "redirect-gateway def1 bypass-dhcp"
 
 # Certain Windows-specific network settings
 # can be pushed to clients, such as DNS
@@ -197,8 +200,8 @@ push "redirect-gateway def1 bypass-dhcp"
 # http://openvpn.net/faq.html#dhcpcaveats
 # The addresses below refer to the public
 # DNS servers provided by opendns.com.
-push "dhcp-option DNS 8.8.8.8"
-push "dhcp-option DNS 8.8.8.4"
+;push "dhcp-option DNS 208.67.222.222"
+;push "dhcp-option DNS 208.67.220.220"
 
 # Uncomment this directive to allow different
 # clients to be able to "see" each other.
@@ -206,7 +209,7 @@ push "dhcp-option DNS 8.8.8.4"
 # To force clients to only see the server, you
 # will also need to appropriately firewall the
 # server's TUN/TAP interface.
-;client-to-client
+client-to-client
 
 # Uncomment this directive if multiple clients
 # might connect with the same certificate/key
@@ -241,7 +244,7 @@ keepalive 10 120
 # a copy of this key.
 # The second parameter should be '0'
 # on the server and '1' on the clients.
-tls-auth ta.key 0 # This file is secret
+tls-auth "{{ openvpn_base_dir }}/ta.key" 0 # This file is secret
 
 # Select a cryptographic cipher.
 # This config item must be copied to
@@ -260,11 +263,11 @@ cipher AES-256-CBC
 # For compression compatible with older clients use comp-lzo
 # If you enable it here, you must also
 # enable it in the client config file.
-;comp-lzo
+comp-lzo
 
 # The maximum number of concurrently connected
 # clients we want to allow.
-;max-clients 100
+max-clients {{ openvpn_max_clients }}
 
 # It's a good idea to reduce the OpenVPN
 # daemon's privileges after initialization.
@@ -294,7 +297,7 @@ status openvpn-status.log
 # while "log-append" will append to it.  Use one
 # or the other (but not both).
 ;log         openvpn.log
-;log-append  openvpn.log
+log-append  openvpn-server.log
 
 # Set the appropriate level of log
 # file verbosity.
@@ -308,7 +311,7 @@ verb 3
 # Silence repeating messages.  At most 20
 # sequential messages of the same message
 # category will be output to the log.
-;mute 20
+mute 20
 
 # Notify the client that when the server restarts so it
 # can automatically reconnect.

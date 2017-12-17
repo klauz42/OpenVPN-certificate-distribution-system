@@ -1,0 +1,84 @@
+---
+- name: Create easy-rsa folder
+  file:
+    path: "{{ easy_rsa_dir }}"
+    recurse: yes
+    mode: 0755
+    owner: root
+    group: root
+    state: directory
+
+- name: Copy CA vars to the server
+  template:
+    src: vars.j2
+    dest: "{{ easy_rsa_dir }}/vars"
+    backup: yes
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Create openssl.cnf
+  template:
+    src: openssl.cnf.j2
+    dest: "{{ easy_rsa_dir }}/openssl.cnf"
+    backup: yes
+    owner: root
+    group: root
+    mode: 0755    
+
+- name: EASY-RSA - start over
+  shell: . ./vars &&  ./clean-all 2> /dev/null
+  args:
+    chdir: "{{ easy_rsa_dir }}" 
+
+- name: EASY-RSA - build CA
+  shell: . ./vars && ./pkitool --initca 2> /dev/null
+  args:
+    chdir: "{{ easy_rsa_dir }}"  
+
+- name: Change CN
+  shell: echo "export KEY_CN={{ server_name }}" >> vars
+  args:
+    chdir: "{{ easy_rsa_dir }}"
+
+- name: Generate server key
+  shell: . ./vars && ./pkitool --server server 2> /dev/null
+  args:
+    chdir: "{{ easy_rsa_dir }}"
+
+- name: Copy needed keys to EASY-RSA dir
+  shell: cp ca.key ca.crt index.txt serial {{ easy_rsa_dir }}
+  args:
+    chdir: "{{ easy_rsa_keydir }}"
+
+- name: Change CN back
+  shell: echo "export KEY_CN={{ easy_rsa_key_cn }}" >> vars
+  args:
+    chdir: "{{ easy_rsa_dir }}"    
+
+- name: EASY-RSA - Generate CRL
+  shell: . ./vars && $OPENSSL ca -gencrl -out {{ easy_rsa_keydir }}/crl.pem -config ${KEY_CONFIG}
+  environment:
+    KEY_CN: ""
+    KEY_OU: ""
+    KEY_NAME: ""
+    KEY_ALTNAMES: ""
+  args:
+    chdir: "{{ easy_rsa_dir }}"
+    creates: "{{ easy_rsa_keydir }}/crl.pem"
+
+
+ #   creates: "{{ easy_rsa_keydir }}/ca.key"
+
+#- name: EASY-RSA - Generate CRL
+#  shell: . ./vars && $OPENSSL ca -gencrl -out {{ easy_rsa_keydir }}/crl.pem -config ${KEY_CONFIG}
+#  environment:
+#    KEY_CN: ""
+#    KEY_OU: ""
+#    KEY_NAME: ""
+#    KEY_ALTNAMES: ""
+#  args:
+#    chdir: "{{ easy_rsa_dir }}"
+#    creates: "{{ easy_rsa_keydir }}/crl.pem"
+
+

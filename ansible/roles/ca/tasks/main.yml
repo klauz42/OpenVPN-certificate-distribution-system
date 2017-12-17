@@ -1,4 +1,4 @@
 ---
-- name: Main role to configure openvpn server
+- name: Main role to configure CA
   import_tasks: redhat.yml
   when: ansible_os_family|lower == "redhat"

@@ -1,0 +1,39 @@
+---
+- name: set openvpn service name - systemd
+  set_fact:
+    openvpn_service_name: "openvpn@{{openvpn_config_file}}.service"
+  when: ansible_service_mgr == "systemd"
+
+- name: Create directory for configs
+  file:
+    path: /etc/openvpn
+    mode: 0755
+    owner: root
+    group: root
+    state: directory
+
+- name: Copy Easy-RSA to OpenVPN directory
+  shell: cp -rf /usr/share/easy-rsa/2.0/* "{{ openvpn_base_dir }}"
+
+- name: Create openssl config file 
+  copy:
+    src: files/openssl.cnf
+    dest: "{{ openvpn_base_dir }}/openssl.cnf"
+    owner: root
+    group: root
+    mode: 0644  
+
+- name: Create config file 
+  template:
+    src: client.conf.j2
+    dest: "{{ openvpn_base_dir }}/client.conf"
+    owner: root
+    group: root
+    mode: 0644
+
+
+- name: setup openvpn auto-start & start
+  service:
+    name: openvpn@client
+    enabled: yes
+    state: started

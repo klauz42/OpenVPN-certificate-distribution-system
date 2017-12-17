@@ -19,3 +19,9 @@
   yum: 
     name: easy-rsa 
     state: present
+    
+- name: Install OpenSC
+  yum: 
+    name: opensc
+    state: present
+

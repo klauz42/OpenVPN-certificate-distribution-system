@@ -1,0 +1,23 @@
+---
+deploy_key_dir: "{{ role_path }}/files"
+easy_rsa_dir: /usr/share/easy-rsa/2.0
+easy_rsa_keydir: "{{ easy_rsa_dir }}/keys"
+
+openssl_config: "{{easy_rsa_dir }}/openssl.cnf"
+server_name: "server"
+
+easy_rsa_key_size: 2048
+easy_rsa_key_country: "RU"
+easy_rsa_key_province: "MSK"
+easy_rsa_key_city: "Moscow"
+easy_rsa_key_org: "Claus Inc"
+easy_rsa_key_email: "nmatweew@yandex.ru"
+easy_rsa_key_ou: "IT Dep"
+easy_rsa_force_pki: False
+
+easy_rsa_key_name: "auth_centr"
+easy_rsa_key_cn: "ClausCN"
+
+#easy_rsa_inventory: True
+server_list: []
+client_list: []

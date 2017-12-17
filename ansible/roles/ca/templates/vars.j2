@@ -26,7 +26,7 @@ export GREP="grep"
 # This variable should point to
 # the openssl.cnf file included
 # with easy-rsa.
-export KEY_CONFIG=`$EASY_RSA/whichopensslcnf $EASY_RSA`
+export KEY_CONFIG="{{ openssl_config }}"
 
 # Edit this variable to point to
 # your soon-to-be-created key
@@ -50,7 +50,7 @@ export PKCS11_PIN="dummy"
 # down TLS negotiation performance
 # as well as the one-time DH parms
 # generation process.
-export KEY_SIZE=2048
+export KEY_SIZE={{ easy_rsa_key_size }}
 
 # In how many days should the root CA key expire?
 export CA_EXPIRE=3650
@@ -61,15 +61,15 @@ export KEY_EXPIRE=3650
 # These are the default values for fields
 # which will be placed in the certificate.
 # Don't leave any of these fields blank.
-export KEY_COUNTRY="RU"
-export KEY_PROVINCE="MSK"
-export KEY_CITY="Moscow"
-export KEY_ORG="Claus Inc"
-export KEY_EMAIL="nmatweew@yandex.ru"
-export KEY_OU="IT Dep"
+export KEY_COUNTRY="{{ easy_rsa_key_country }}"
+export KEY_PROVINCE="{{ easy_rsa_key_province }}"
+export KEY_CITY="{{ easy_rsa_key_city }}"
+export KEY_ORG="{{ easy_rsa_key_org }}"
+export KEY_EMAIL="{{ easy_rsa_key_email }}"
+export KEY_OU="{{ easy_rsa_key_ou }}"
 
 # X509 Subject Field
-export KEY_NAME="server"
+export KEY_NAME="{{ easy_rsa_key_name }}"
 
 # PKCS11 Smart Card
 # export PKCS11_MODULE_PATH="/usr/lib/changeme.so"
@@ -77,4 +77,4 @@ export KEY_NAME="server"
 
 # If you'd like to sign all keys with the same Common Name, uncomment the KEY_CN export below
 # You will also need to make sure your OpenVPN server config has the duplicate-cn option set
-export KEY_CN="ClausCommonName"
+export KEY_CN="{{ easy_rsa_key_cn }}"
