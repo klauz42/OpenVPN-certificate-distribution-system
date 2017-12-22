@@ -1,10 +1,11 @@
 ---
-- hosts: apache
+- hosts: mainserver
   become: yes
   become_user: root
   become_method: sudo
 
 
   roles:
-   # - apache
-    - ca
+    - apache
+    - opensrv
+   # - freeipa

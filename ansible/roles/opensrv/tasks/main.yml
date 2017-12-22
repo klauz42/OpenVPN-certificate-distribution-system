@@ -1,6 +1,4 @@
 ---
-#- include_tasks: paintterminal.yml
-
 - name: Install OpenVPN
   include_tasks: install.yml
   tags:

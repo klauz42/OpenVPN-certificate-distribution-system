@@ -1,0 +1,112 @@
+---
+- name: Selinux off
+  selinux:
+    policy: targeted
+    state: permissive
+    
+- name: Try again
+  shell: setenforce 0
+  
+#Server
+- name: Create OpenVPN directory 
+  file:
+    path: "{{ openvpn_base_dir }}"
+    mode: 0755
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    state: directory
+
+- name: Copy Easy-RSA to OpenVPN directory
+  shell: cp -rf /usr/share/easy-rsa/2.0/* "{{ openvpn_base_dir }}"
+
+- name: Create openssl config file
+  template:
+    src: openssl.cnf.j2
+    dest: "{{ openvpn_base_dir }}/openssl.cnf"
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: 0644  
+
+- name: Create config file server
+  template:
+    src: server.conf.j2
+    dest: "{{ openvpn_base_dir }}/server.conf"
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: 0644
+
+- name: create ccd
+  file:
+    path: "{{ openvpn_base_dir }}/ccd"
+    mode: 0755
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    state: directory
+
+- name: generate dh params
+  command: openssl dhparam -out "{{openvpn_base_dir}}/dh2048.pem" "{{ easy_rsa_key_size }}"
+  args:
+    chdir: "{{openvpn_base_dir}}"
+    creates: dh2048.pem
+
+- name: generate tls-auth key
+  command: openvpn --genkey --secret "{{ openvpn_base_dir }}/ta.key"
+  args:
+    chdir: "{{openvpn_base_dir}}"
+    creates: ta.key  
+
+#CA
+- name: Create vars file
+  template:
+    src: vars.j2
+    dest: "{{ openvpn_base_dir }}/vars"
+    owner: "{{ user }}"
+    group: "{{ group }}"
+    mode: 0644
+
+- name: EASY-RSA - start over
+  shell: . ./vars &&  ./clean-all 2> /dev/null
+  args:
+    chdir: "{{ openvpn_base_dir }}" 
+
+- name: EASY-RSA - build CA
+  shell: . ./vars && ./pkitool --initca 2> /dev/null
+  args:
+    chdir: "{{ openvpn_base_dir }}"  
+
+
+- name: Generate server key
+  shell: . ./vars && ./pkitool --server server 2> /dev/null
+  args:
+    chdir: "{{ openvpn_base_dir }}"
+
+- name: Copy needed keys to EASY-RSA dir
+  shell: cp ca.key ca.crt index.txt server.key server.crt serial {{ openvpn_base_dir }}
+  args:
+    chdir: "{{ openvpn_key_dir }}"
+ 
+- name: EASY-RSA - Generate CRL
+  shell: . ./vars && $OPENSSL ca -gencrl -out "{{ openvpn_base_dir }}/crl.pem" -config "{{ openssl_config }}"
+  environment:
+    KEY_CN: ""
+    KEY_OU: ""
+    KEY_NAME: ""
+    KEY_ALTNAMES: ""
+  args:
+    chdir: "{{ openvpn_base_dir }}"
+    
+
+#daemon
+- name: setup openvpn auto-start & start
+  service:
+    name: openvpn@server
+    enabled: yes
+    state: started
+
+- name: Set up permissimons
+  file:
+    path: "{{ openvpn_base_dir }}"
+    owner: apache
+    group: apache
+    state: directory
+    recurse: yes

@@ -1,8 +1,10 @@
 ---
-- hosts: ovpnsrv
+- hosts: mainserver
   become: yes
   become_user: root
   become_method: sudo
 
+
   roles:
-    - ovpnsrv
+    - apache
+    - opensrv

@@ -1,4 +1,8 @@
 ---
+- name: set timezone to Moscow
+  timezone:
+    name: Europe/Moscow
+
 - name: Install NTPDate
   yum: 
     name: ntpdate

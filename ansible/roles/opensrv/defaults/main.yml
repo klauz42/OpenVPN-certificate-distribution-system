@@ -1,13 +1,18 @@
 ---
 # defaults file for openvpn
-openvpn_base_dir: /etc/openvpn
-openvpn_key_dir: /etc/openvpn/keys
+cgi_bin: /var/www/cgi-bin
+openvpn_base_dir: "{{ cgi_bin }}/openvpn"
+openvpn_key_dir: "{{ openvpn_base_dir }}/keys"
 openvpn_log_dir: /var/log/openvpn
+openssl_config: "{{ openvpn_base_dir }}/openssl.cnf"
+server_name: "server"
+user: root
+group: root
+
 openvpn_port: 1194
 openvpn_server_hostname: "{{inventory_hostname}}"
 openvpn_proto: udp
 openvpn_dualstack: true
-openvpn_rsa_bits: 2048
 openvpn_management_client_user: root
 openvpn_server_network: 10.8.0.0
 openvpn_server_netmask: 255.255.255.0
@@ -35,3 +40,20 @@ openvpn_use_crl: false
 openvpn_duplicate_cn: false
 openvpn_status_version: 1
 openvpn_service_name: openvpn
+
+###########################################
+###            ca vars                  ###
+###########################################
+
+easy_rsa_key_size: 2048
+easy_rsa_key_country: "RU"
+easy_rsa_key_province: "MSK"
+easy_rsa_key_city: "Moscow"
+easy_rsa_key_org: "Claus Inc"
+easy_rsa_key_email: "nmatweew@yandex.ru"
+easy_rsa_key_ou: "IT Dep"
+easy_rsa_force_pki: False
+
+easy_rsa_key_name: ""
+easy_rsa_key_cn: ""
+
