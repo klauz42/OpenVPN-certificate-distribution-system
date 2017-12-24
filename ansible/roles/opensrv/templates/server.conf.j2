@@ -1,15 +1,17 @@
-local "{{ ansible_default_ipv4.address }}""
+local {{ ansible_default_ipv4.address }}
 port 1194
 proto udp
 dev tun
 
-ca   "{{ openvpn_base_dir }}/ca.crt"
-cert "{{ openvpn_base_dir }}/server.crt"
-key  "{{ openvpn_base_dir }}/server.key"  # This file should be kept secret!
+ca   "{{ openvpn_key_dir }}/ca.crt"
+cert "{{ openvpn_key_dir }}/server.crt"
+key  "{{ openvpn_key_dir }}/server.key"  # This file should be kept secret!
 dh "{{ openvpn_base_dir }}/dh2048.pem"
 
-
 server 10.8.0.0 255.255.255.0
+
+user nobody
+group nobody
 
 ifconfig-pool-persist ipp.txt
 keepalive 10 120

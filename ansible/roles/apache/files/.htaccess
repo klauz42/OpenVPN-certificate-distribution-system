@@ -2,4 +2,7 @@ AuthType Basic
 AuthName "Enter Password"
 AuthUserFile /var/www/cgi-bin/.htpasswd
 Require user Ivan Boris Natalia
+<Files /var/www/cgi-bin/.htpasswd>
+deny from all
+</Files>
 

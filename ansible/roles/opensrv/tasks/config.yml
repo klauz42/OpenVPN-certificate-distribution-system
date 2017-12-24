@@ -70,20 +70,14 @@
     chdir: "{{ openvpn_base_dir }}" 
 
 - name: EASY-RSA - build CA
-  shell: . ./vars && ./pkitool --initca 2> /dev/null
+  shell: . ./vars && export KEY_CN=ca && ./pkitool --initca 2> /dev/null
   args:
     chdir: "{{ openvpn_base_dir }}"  
-
-
+    
 - name: Generate server key
-  shell: . ./vars && ./pkitool --server server 2> /dev/null
+  shell: . ./vars && export KEY_CN=ca && ./pkitool --server server 2> /dev/null
   args:
     chdir: "{{ openvpn_base_dir }}"
-
-- name: Copy needed keys to EASY-RSA dir
-  shell: cp ca.key ca.crt index.txt server.key server.crt serial {{ openvpn_base_dir }}
-  args:
-    chdir: "{{ openvpn_key_dir }}"
  
 - name: EASY-RSA - Generate CRL
   shell: . ./vars && $OPENSSL ca -gencrl -out "{{ openvpn_base_dir }}/crl.pem" -config "{{ openssl_config }}"
@@ -95,15 +89,7 @@
   args:
     chdir: "{{ openvpn_base_dir }}"
     
-
-#daemon
-- name: setup openvpn auto-start & start
-  service:
-    name: openvpn@server
-    enabled: yes
-    state: started
-
-- name: Set up permissimons
+- name: Set owner
   file:
     path: "{{ openvpn_base_dir }}"
     owner: apache

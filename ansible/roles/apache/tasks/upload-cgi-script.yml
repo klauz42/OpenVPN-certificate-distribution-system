@@ -1,16 +1,16 @@
 ---
 - name: Upload script
-  file:
+  copy:
     src: keygenerate.py
     dest: /var/www/cgi-bin/keygenerate.py
     owner: apache
     group: apache
     mode: 0544
 
- - name: Upload script
-   file:
-    src: keygenerate.py
-    dest: /var/www/cgi-bin/keygenerate.py
+- name: Upload script
+  copy:
+    src: connections.sqlite
+    dest: /var/www/cgi-bin/connections.sqlite
     owner: apache
     group: apache
     mode: 0644

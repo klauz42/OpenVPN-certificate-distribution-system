@@ -19,16 +19,16 @@
     owner: root
     group: root
     mode: 0644
-- copy:
-    src: ssl.conf
-    dest: /etc/httpd/conf.d/
+- template:
+    src: ssl.conf.j2
+    dest: /etc/httpd/conf.d/ssl.conf
     owner: root
     group: root
     mode: 0644
 #HTTPS only
-- copy:
-    src: non-ssl.conf
-    dest: /etc/httpd/conf.d/
+- template:
+    src: non-ssl.conf.j2
+    dest: /etc/httpd/conf.d/non-ssl.conf
     owner: root
     group: root
     mode: 0644

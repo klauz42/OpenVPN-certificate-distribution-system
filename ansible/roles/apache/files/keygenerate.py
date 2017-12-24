@@ -5,7 +5,15 @@ from subprocess import Popen, PIPE
 import sqlite3
 import re
 
+
+def file_to_string(path):
+    cat = Popen(["cat " + path],
+                stdout=PIPE, stderr=PIPE, shell=True)
+    cat.wait()
+    return cat.communicate()[0]
+
 print("Content-Type: text/html\n\n")
+
 
 # bruteforce protection
 remote_addr = environ["REMOTE_ADDR"]
@@ -29,14 +37,6 @@ cgitb.enable()
 easy_rsa_dir = "/var/www/cgi-bin/openvpn"
 user_shell = "/bin/bash"
 
-
-def file_to_string(path):
-    cat = Popen(["cat " + path],
-                stdout=PIPE, stderr=PIPE, shell=True)
-    cat.wait()
-    return cat.communicate()[0]
-
-
 # curl tese
 http_user_agent = environ["HTTP_USER_AGENT"]
 if not re.search(r"curl", http_user_agent):
@@ -52,7 +52,17 @@ source_process.wait()
 
 secret_key_path = easy_rsa_dir + "/keys/" + user + ".key"
 certificate_path = easy_rsa_dir + "/keys/" + user + ".crt"
+ca_crt_path = easy_rsa_dir + "/keys/ca.crt"
 ta_key_path = easy_rsa_dir + "/ta.key"
+
+secret_key = file_to_string(secret_key_path)
+certificate = file_to_string(certificate_path)
+ta_key = file_to_string(ta_key_path)
+ca_cert = file_to_string(ca_crt_path)
+
+if len(certificate) == 0:
+    print 'echo "Keys was issued earlier. Please contact your administrator."'
+    exit(1)
 
 client_config = "client\n" \
                 "dev tun\n" \
@@ -62,33 +72,30 @@ client_config = "client\n" \
                 "nobind\n" \
                 "persist-key\n" \
                 "persist-tun\n" \
+                "user nobody\n" \
+                "group nobody\n" \
                 "ca /etc/openvpn/ca.crt\n" \
                 "cert /etc/openvpn/" + user + ".crt\n" \
                 "key  /etc/openvpn/" + user + ".key\n" \
                 "comp-lzo\n" \
                 "verb 3"
-
-secret_key = file_to_string(secret_key_path)
-certificate = file_to_string(certificate_path)
-ta_key = file_to_string(ta_key_path)
-
-if len(certificate) == 0:
-    print 'echo "Keys was issued earlier. Please contact your administrator."'
-    exit(1)
-
 # client script
 user_script = "#!" + user_shell + "\n\n"
 user_script += "yum update -y\n"
 user_script += "yum install epel-release -y\n"
 user_script += "yum install openvpn -y\n"
 user_script += "yum install easy-rsa -y\n"
-user_script += "mkdir /etc/openvpn\n"
 user_script += "cp -rf /usr/share/easy-rsa/2.0/* /etc/openvpn\n"
 user_script += "cd /etc/openvpn\n"
 user_script += "echo \"" + certificate + "\" > " + user + ".crt\n"
 user_script += "echo \"" + secret_key + "\" > " + user + ".key\n"
+user_script += "echo \"" + secret_key + "\" > " + user + ".key\n"
+user_script += "chmod 0600 " + user + ".key\n"
 user_script += 'echo "' + ta_key + '" > ta.key\n'
-user_script += 'echo "' + client_config + '" > client.config\n'
+user_script += 'echo "' + client_config + '" > client.conf\n'
+user_script += 'echo "' + ca_cert + '" > ca.crt\n'
+user_script += "systemctl start openvpn@client\n"
+user_script += "systemctl enable openvpn@client\n"
 
 print user_script
 

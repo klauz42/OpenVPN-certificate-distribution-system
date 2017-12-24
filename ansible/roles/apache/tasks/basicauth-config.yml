@@ -12,7 +12,7 @@
 #Boris - tsarpsar
 #Natalia - rucheybessiliya
 - copy:
-    src: .htaccess
+    src: .htpasswd
     dest: /var/www/cgi-bin/
     owner: apache
     group: apache
@@ -20,7 +20,7 @@
 
 - copy:
     src: httpd.conf
-    dest: /etc/httpd/conf.d/
+    dest: /etc/httpd/conf/
     owner: root
     group: root
     mode: 0600

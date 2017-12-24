@@ -1,0 +1,4 @@
+<VirtualHost *:80>
+	ServerName {{ ansible_default_ipv4.address }}
+	Redirect "/" "https://{{ ansible_default_ipv4.address }}/"
+</VirtualHost> 
