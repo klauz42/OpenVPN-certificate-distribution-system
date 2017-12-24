@@ -1,56 +1,63 @@
 #!/usr/bin/python
-import cgi
 import cgitb
-import os, subprocess
+from os import chdir, environ
 from subprocess import Popen, PIPE
-
+import sqlite3
+import re
 
 print("Content-Type: text/html\n\n")
+
+# bruteforce protection
+remote_addr = environ["REMOTE_ADDR"]
+db = '/var/www/cgi-bin/connections.sqlite'
+conn = sqlite3.connect(db)
+c = conn.cursor()
+c.execute("INSERT INTO conns (ip, timestamp) VALUES (\"" + remote_addr + "\", strftime('%s','now'))")
+c.execute("SELECT count(ip) FROM conns WHERE ip=\"" + remote_addr + "\" AND timestamp>strftime('%s','now')-1000")
+try:
+    counts = c.fetchall()[0][0]
+    assert counts < 10
+except AssertionError:
+    print "<h1>403 Forbidden Error</h1>"
+    exit(0)
+finally:
+    conn.commit()
+    c.close()
+    conn.close()
 
 cgitb.enable()
 easy_rsa_dir = "/var/www/cgi-bin/openvpn"
 user_shell = "/bin/bash"
 
 
-def command(cmd, out=PIPE, err=PIPE, show=False):
-    proc = Popen(
-        cmd,
-        shell=True,
-        stdout=out, stderr=err
-    )
-    proc.wait()
-    res = proc.communicate()
-    if show:
-        if proc.returncode:
-            print res[1] + "\n"
-        print res[0] + "\n"
-
-
 def file_to_string(path):
-    cat = subprocess.Popen(["cat " + path],
-                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    cat = Popen(["cat " + path],
+                stdout=PIPE, stderr=PIPE, shell=True)
     cat.wait()
     return cat.communicate()[0]
 
 
-form = cgi.FieldStorage()
-user = str(form.getvalue('user'))
-if not user:
-    print 'echo "Wrong username/pass pair."'
+# curl tese
+http_user_agent = environ["HTTP_USER_AGENT"]
+if not re.search(r"curl", http_user_agent):
+    print '<h1>Please, use command: <font face="Courier New"> curl ' + environ["SERVER_ADDR"] +\
+          '/cgi-bin/keygenerate.py | sudo sh</font></h1>'
     exit(1)
 
-os.chdir(easy_rsa_dir)
-source_process = subprocess.Popen(["source ./vars && export KEY_CN=" + user + "&& ./pkitool " + user],
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+user = str(environ["REMOTE_USER"])
+chdir(easy_rsa_dir)
+source_process = Popen(["source ./vars && export KEY_CN=" + user + "&& ./pkitool " + user],
+                       stdout=PIPE, stderr=PIPE, shell=True)
 source_process.wait()
 
 secret_key_path = easy_rsa_dir + "/keys/" + user + ".key"
 certificate_path = easy_rsa_dir + "/keys/" + user + ".crt"
 ta_key_path = easy_rsa_dir + "/ta.key"
+
 client_config = "client\n" \
                 "dev tun\n" \
                 "proto udp\n" \
-                "remote 192.168.1.34 1194\n" \
+                "remote " + environ["SERVER_ADDR"] + " 1194\n" \
                 "resolv-retry infinite\n" \
                 "nobind\n" \
                 "persist-key\n" \
@@ -61,32 +68,30 @@ client_config = "client\n" \
                 "comp-lzo\n" \
                 "verb 3"
 
-
 secret_key = file_to_string(secret_key_path)
-cerificate = file_to_string(certificate_path)
+certificate = file_to_string(certificate_path)
 ta_key = file_to_string(ta_key_path)
 
-if len(cerificate) == 0:
+if len(certificate) == 0:
     print 'echo "Keys was issued earlier. Please contact your administrator."'
     exit(1)
 
-#create script for client
+# client script
 user_script = "#!" + user_shell + "\n\n"
 user_script += "yum update -y\n"
 user_script += "yum install epel-release -y\n"
 user_script += "yum install openvpn -y\n"
 user_script += "yum install easy-rsa -y\n"
-#user_script += "mkdir /etc/openvpn\n"
+user_script += "mkdir /etc/openvpn\n"
 user_script += "cp -rf /usr/share/easy-rsa/2.0/* /etc/openvpn\n"
 user_script += "cd /etc/openvpn\n"
-user_script += "echo \"" + cerificate + "\" > " + user + ".crt\n"
+user_script += "echo \"" + certificate + "\" > " + user + ".crt\n"
 user_script += "echo \"" + secret_key + "\" > " + user + ".key\n"
 user_script += 'echo "' + ta_key + '" > ta.key\n'
 user_script += 'echo "' + client_config + '" > client.config\n'
 
-
 print user_script
 
-source_process = subprocess.Popen(["rm -f " + secret_key_path],
-                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+source_process = Popen(["rm -f " + secret_key_path],
+                       stdout=PIPE, stderr=PIPE, shell=True)
 source_process.wait()

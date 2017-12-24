@@ -22,17 +22,3 @@
     mode: 0644
   notify: restart apache
   when: apache_create_vhosts
-
-- name: Allow http service
-  shell: firewall-cmd --add-service=http --permanent 2> /dev/null
-
-- name: Reload firewall
-  shell: firewall-cmd --reload
-
-- name: Copy script
-  file:
-    src: generatekey.py
-    dest: /var/www/cgi-bin/generate.py
-    owner: apache
-    group: apache
-    mode: 0755

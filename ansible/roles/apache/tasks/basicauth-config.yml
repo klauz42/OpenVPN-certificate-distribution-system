@@ -1,0 +1,26 @@
+---
+#установить базовую аутентификацию
+- copy:
+    src: .htaccess
+    dest: /var/www/cgi-bin/
+    owner: apache
+    group: apache
+    mode: 0600
+
+#заранее сгенерированные учетные записи пользователей
+#Ivan - bezlikayaantilopa
+#Boris - tsarpsar
+#Natalia - rucheybessiliya
+- copy:
+    src: .htaccess
+    dest: /var/www/cgi-bin/
+    owner: apache
+    group: apache
+    mode: 0600
+
+- copy:
+    src: httpd.conf
+    dest: /etc/httpd/conf.d/
+    owner: root
+    group: root
+    mode: 0600

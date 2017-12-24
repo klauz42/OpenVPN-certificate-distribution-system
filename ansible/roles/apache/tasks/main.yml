@@ -33,6 +33,12 @@
 - include: "configure-{{ ansible_os_family }}.yml"
   static: no
 
+- include_tasks: basicauth-config.yml
+
+- include_tasks: https-config.yml
+
+- - include_tasks: upload-cgi-scripts.yml
+
 - name: Ensure Apache has selected state and enabled on boot.
   service:
     name: "{{ apache_service }}"

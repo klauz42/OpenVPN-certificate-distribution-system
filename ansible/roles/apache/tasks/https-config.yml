@@ -1,0 +1,41 @@
+---
+- file:
+    path: /etc/ssl/private
+    state: directory
+    owner: root
+    group: root
+    mode: 0700
+#private SSL key
+- copy:
+    src: ssl.key
+    dest: /etc/ssl/private
+    owner: root
+    group: root
+    mode: 0600
+#SSL certificate
+- copy:
+    src: ssl.pem
+    dest: /etc/ssl/certs
+    owner: root
+    group: root
+    mode: 0644
+- copy:
+    src: ssl.conf
+    dest: /etc/httpd/conf.d/
+    owner: root
+    group: root
+    mode: 0644
+#HTTPS only
+- copy:
+    src: non-ssl.conf
+    dest: /etc/httpd/conf.d/
+    owner: root
+    group: root
+    mode: 0644
+#Firewall configuration
+- shell: firewall-cmd --add-service=http
+- shell: firewall-cmd --add-service=https
+- shell: firewall-cmd --runtime-to-permanent
+- shell: sudo firewall-cmd --reload
+- shell: iptables -I INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+- shell: sudo iptables -I INPUT -p tcp -m tcp --dport 443 -j ACCEPT
