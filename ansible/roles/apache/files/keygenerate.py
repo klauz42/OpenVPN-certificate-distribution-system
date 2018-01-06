@@ -34,10 +34,10 @@ finally:
     conn.close()
 
 cgitb.enable()
-easy_rsa_dir = "/var/www/cgi-bin/openvpn"
+easy_rsa_dir = "/etc/openvpn"
 user_shell = "/bin/bash"
 
-# curl tese
+# curl test
 http_user_agent = environ["HTTP_USER_AGENT"]
 if not re.search(r"curl", http_user_agent):
     print '<h1>Please, use command: <font face="Courier New"> curl ' + environ["SERVER_ADDR"] +\
@@ -64,21 +64,26 @@ if len(certificate) == 0:
     print 'echo "Keys was issued earlier. Please contact your administrator."'
     exit(1)
 
-client_config = "client\n" \
-                "dev tun\n" \
-                "proto udp\n" \
-                "remote " + environ["SERVER_ADDR"] + " 1194\n" \
-                "resolv-retry infinite\n" \
-                "nobind\n" \
-                "persist-key\n" \
-                "persist-tun\n" \
-                "user nobody\n" \
-                "group nobody\n" \
-                "ca /etc/openvpn/ca.crt\n" \
-                "cert /etc/openvpn/" + user + ".crt\n" \
-                "key  /etc/openvpn/" + user + ".key\n" \
-                "comp-lzo\n" \
-                "verb 3"
+client_config = "client\n" \ 
+                "tls-client\n" \  #режим "клиент-сервер"
+                "dev tun\n" \     #создание маршрутизируемого IP-туннеля
+                "proto udp\n" \   #выбор протокола 
+                "port 1194\n" \   #порт для работы OpenVPN
+                "remote " + environ["SERVER_ADDR"] + "\n" \ #реальный IP-адрес сервера
+                "remote-cert-tls server\n" \ #защита от подмены сервера третьим лицом
+                "cd /etc/openvpn\n" \
+                "pull\n" \        #разрешение на прием конфигурации клиента с сервера
+                "tls-auth /etc/openvpn/ta.key 1\n" \ #ключ HMAC
+                "cipher DES-EDE3-CBC\n" \    #выбор шифра (не имеет значения в рамках работы)
+                "user nobody\n" \            #запуск демона OpenVPN из-под 
+                "group nobody\n" \           #непривилегирированного пользователя
+                "ca /etc/openvpn/ca.crt\n" \ #сертифика УЦ
+                "cert /etc/openvpn/" + user + ".crt\n" \ #откртый ключ клиента
+                "key  /etc/openvpn/" + user + ".key\n" \ #закрытый ключ клиента
+                "keepalive 10 120\n" \       #настройка проверки активности сессии 
+                "comp-lzo\n" \               #параметры сжатия трафика
+                "log-append openvpn.log\n" \ #путь к логам
+                "verb 3"                     #уровень подробности логов
 # client script
 user_script = "#!" + user_shell + "\n\n"
 user_script += "yum update -y\n"
@@ -99,6 +104,6 @@ user_script += "systemctl enable openvpn@client\n"
 
 print user_script
 
-source_process = Popen(["rm -f " + secret_key_path],
-                       stdout=PIPE, stderr=PIPE, shell=True)
+source_process = Popen(["rm -f " + secret_key_path],        #удалить закрытый
+                       stdout=PIPE, stderr=PIPE, shell=True)#ключ клиента
 source_process.wait()
